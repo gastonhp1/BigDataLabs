@@ -1,0 +1,12 @@
+#cloud-config
+# vim: syntax=yaml
+#
+
+instance-id: mongodb
+local-hostname: mongodb
+user: gastonhp1
+password: Pass.123!
+chpasswd: {expire: false}
+ssh_pwauth: True
+ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCWQfoK6MJgVX/YIzBEgeYyQPGEJu7fiy+Ez64YtOf0Jv/vMxDu4kw7zQOzgYWRs+LW/OtZaMZsAMLdrPcjyzDNdUyrEs0NUxNAuo6KjgcWWUXwKaAHLtrMjK/8zKgJYK1YpTHxuq/Q7X4Qa6/I+OEAAG+FE7/5ft/6E8V5odIZQZnuuP3s5MkBSSCWYm9MP5qv5RkSyxsh2y6KBe3q4jxK5vjmhREXGe+94sBP7aPhRWT6bNwwH5gpb14+7MsKyIio6lTaeioePj6qVVKtzgNwhp9/2qYzGIrLCrmSfPtYK88PRQlRrh0HLw1GiFOeF9e+AmGZAz6iB/Few+mKOxl0huzknNeCqctMbxBALCvSl0afKqQvqbOp1TlWdcLqFVe5dIg2hlG3YYpxi4Y1+IVTbKy0E/RuFGoqNvDg2zG76nJhpX+1P4ATOPxryMtN76zBNAQNjf1PQ+IWJresGtsXri10oTzywN5BUAXKpLfKEY/c7U7/Q+O5/vpo66Vkdvc= gastonhp1@PC-Gaston

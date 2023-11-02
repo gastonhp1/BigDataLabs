@@ -1,0 +1,64 @@
+- name: Configure MongoDB Replicaset
+  hosts: localhost
+  become: yes
+  become_user: gastonhp1
+
+  vars:
+    mongodb_instances:
+      - { id: 0, port: 27017, data_dir: '/var/lib/mongodb1', config_template: 'mongod1.conf.j2' }
+      - { id: 1, port: 27018, data_dir: '/var/lib/mongodb2', config_template: 'mongod2.conf.j2' }
+      - { id: 2, port: 27019, data_dir: '/var/lib/mongodb3', config_template: 'mongod3.conf.j2' }
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install required packages
+      apt:
+        name:
+          - mongodb
+          - mongodb-server
+          - mongodb-clients
+        state: latest
+      when: ansible_os_family == "Debian"
+
+    - name: Start MongoDB service
+      service:
+        name: mongodb
+        state: started
+        enabled: yes
+
+    - name: Create data directories
+      file:
+        path: "{{ item.data_dir }}"
+        state: directory
+      loop: "{{ mongodb_instances }}"
+
+    - name: Configure MongoDB instances
+      template:
+        src: "templates/{{ item.config_template }}"
+        dest: "/etc/mongodb{{ item.id + 1 }}.conf"
+      loop: "{{ mongodb_instances }}"
+
+    - name: Start MongoDB instances
+      shell: "mongod --config /etc/mongodb{{ item.id + 1 }}.conf --port {{ item.port }} --fork"
+      async: 60
+      poll: 0
+      ignore_errors: yes
+      loop: "{{ mongodb_instances }}"
+
+    - name: Wait for MongoDB instances to be running
+      wait_for:
+        port: "{{ item.port }}"
+        delay: 5
+        timeout: 300
+      loop: "{{ mongodb_instances }}"
+
+    - name: Initialize replicaset
+      mongodb_replicaset:
+        login_host: 127.0.0.1
+        login_port: 27017
+        replica_set: myReplicaSet
+        members: "{{ mongodb_instances | map('extract', ['id', 'port']) | list }}"

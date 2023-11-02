@@ -1,0 +1,67 @@
+---
+- name: Install Neo4j
+  hosts: localhost
+  become: true
+
+  vars:
+    neo4j_version: "4.3"  # Version of Neo4j you want to install
+    neo4j_password: "Pass.123!"  # Password for the neo4j user
+    neo4j_http_port: 7474  # HTTP port for Neo4j web interface
+    neo4j_https_port: 7473  # HTTPS port for Neo4j web interface
+    neo4j_bolt_port: 7687  # Bolt port for application connections
+
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+
+    - name: Install OpenJDK 11
+      apt:
+        name: openjdk-11-jre-headless
+        state: present
+
+    - name: Download and import Neo4j repository key
+      apt_key:
+        url: https://debian.neo4j.com/neotechnology.gpg.key
+        state: present
+
+    - name: Add Neo4j repository to sources.list.d
+      apt_repository:
+        repo: "deb https://debian.neo4j.com stable {{ neo4j_version }}"
+        state: present
+
+    - name: Update package cache after adding the repository
+      apt:
+        update_cache: yes
+
+    - name: Install Neo4j
+      apt:
+        name: neo4j
+        state: present
+
+    #- name: Change the password for the neo4j user
+    #  uri:
+    #    url: "http://localhost:{{ neo4j_http_port }}/user/neo4j/password"
+    #    method: POST
+    #    user: neo4j
+    #    password: neo4j
+    #    body_format: json
+    #    body: { "password": "{{ neo4j_password }}" }
+    #    status_code: 200
+
+    - name: Configure Neo4j access ports
+      lineinfile:
+        path: /etc/neo4j/neo4j.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      with_items:
+        - { regexp: "#dbms.default_listen_address=0.0.0.0", line: "dbms.default_listen_address=0.0.0.0" }
+        - { regexp: "#dbms.connector.http.listen_address=:7474", line: "dbms.connector.http.listen_address=:{{ neo4j_http_port }}" }
+        - { regexp: "#dbms.connector.https.listen_address=:7473", line: "dbms.connector.https.listen_address=:{{ neo4j_https_port }}" }
+        - { regexp: "#dbms.connector.bolt.listen_address=:7687", line: "dbms.connector.bolt.listen_address=:{{ neo4j_bolt_port }}" }
+
+    - name: Start Neo4j service
+      service:
+        name: neo4j
+        state: started
+        enabled: yes
